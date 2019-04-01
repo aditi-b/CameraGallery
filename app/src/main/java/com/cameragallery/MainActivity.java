@@ -85,7 +85,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         switch (which) {
                             case 0:
                                 // open gallery
-                                startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
+                                startActivityForResult(new Intent(Intent.ACTION_PICK,
+                                        android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI),
+                                        GET_FROM_GALLERY);
                                 break;
                                 case 1:
                                     // request external storge permission
@@ -104,7 +106,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST);
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST);
         } else {
             // if granted open camera and click picture
             publicPictureIntent();
