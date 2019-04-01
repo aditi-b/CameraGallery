@@ -3,21 +3,19 @@ package com.cameragallery;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -33,34 +31,16 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import static android.os.Environment.getExternalStoragePublicDirectory;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    String permisions[] = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
-    ImageView imageView;
+    ImageView imageView;                                     //profile picture imageview
     FloatingActionButton btnFloat;
-    Button btnNext;
+    Button btnNext;                                         // button to move to next activity
     String currentPhotoPath;
-    private static final int MY_PERMISSIONS_REQUEST = 1;
-    static final int REQUEST_TAKE_PHOTO = 2;
-    public static final int GET_FROM_GALLERY = 3;
-    private String[] app = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
-
-    public static boolean hasPermissions(Context context, Activity activity, String... permissions) {
-        if (context != null && permissions != null) {
-            for (String permission : permissions) {
-                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false;
-                } else {
-                    ActivityCompat.requestPermissions(activity, permissions,
-                            MY_PERMISSIONS_REQUEST);
-                }
-
-            }
-        }
-        return true;
-    }
+    private static final int MY_PERMISSIONS_REQUEST = 1;   // permission request code
+    static final int REQUEST_TAKE_PHOTO = 2;               // take photo code
+    public static final int GET_FROM_GALLERY = 3;         // get photo from gallery code
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,16 +57,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.floatingActionButton:
+                // show picture dialogs for camera and gallery options
                 showPictureDialog();
                 break;
 
             case R.id.button:
+                // move to MultipleImages activity
                 Intent intent = new Intent(this, MultipleImages.class);
                 startActivity(intent);
                 break;
         }
     }
 
+    /**
+     * picture dialog to select camera or gallery options
+     */
     private void showPictureDialog() {
         AlertDialog.Builder pictureDialog = new AlertDialog.Builder(this);
         pictureDialog.setTitle("Select Action");
@@ -99,13 +84,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                             case 0:
-                                choosePhotoFromGallary();
+                                // open gallery
+                                startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
                                 break;
-                            case 1:
-                                if (!hasPermissions(MainActivity.this, MainActivity.this, app)) {
-                                    ActivityCompat.requestPermissions(MainActivity.this, app, MY_PERMISSIONS_REQUEST);
-                                }
-                                publicPictureIntent();
+                                case 1:
+                                    // request external storge permission
+                                requestStoragePermission();
                                 break;
                         }
                     }
@@ -113,10 +97,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         pictureDialog.show();
     }
 
-    private void choosePhotoFromGallary() {
-        startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
+    /**
+     * request external storage pernmission
+     */
+    public void requestStoragePermission() {
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST);
+        } else {
+            // if granted open camera and click picture
+            publicPictureIntent();
+        }
     }
 
+    /**
+     * open settings to allow user to allow permissions manually
+     */
     public void showAlertDialogButtonClicked() {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -141,7 +138,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dialog.show();
     }
 
-
+    /**
+     * take picture from camera
+     */
     private void publicPictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -164,37 +163,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    /**
+     *checking if the permissions are granted or not
+     */
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST: {
-                for (int i = 0, len = permissions.length; i < len; i++) {
-                    String permission = permissions[i];
-                    if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
-
-                        if (Build.VERSION.SDK_INT >= 23) {
-                            boolean showRationale = shouldShowRequestPermissionRationale(permission);
-                            if (!showRationale) {
-                                showAlertDialogButtonClicked();
-                            } else {
-
-                                requestPermissions(
-                                        permissions,
-                                        MY_PERMISSIONS_REQUEST);
-                            }
-                        }
-                        return;
-                    }
-
-
+        if (requestCode == MY_PERMISSIONS_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                publicPictureIntent();
+            } else {
+                boolean showRationale = shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                if (!showRationale) {
+                    showAlertDialogButtonClicked();
+                } else {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Required Location Permission")
+                            .setMessage("You have to give this permission to acess this feature")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                            MY_PERMISSIONS_REQUEST);
+                                }
+                            })
+                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            })
+                            .create()
+                            .show();
                 }
-
             }
-
 
         }
     }
 
+    /**
+     * create a public folde to store images
+     */
     private File createPublicFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         String imageFileName = "JPEG_" + timeStamp + ".jpg";
@@ -205,10 +214,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         File file = new File(path, imageFileName);
         // Save a file: path for use with ACTION_VIEW intents
         currentPhotoPath = file.getAbsolutePath();
-        Log.i("ddddddd", currentPhotoPath);
         return file;
     }
 
+    /**
+     * getting the image and setting it in the image view
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -221,10 +232,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
                 imageView.setImageBitmap(bitmap);
             } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
