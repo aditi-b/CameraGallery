@@ -32,7 +32,7 @@ public class MultipleImages extends AppCompatActivity implements View.OnClickLis
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(this, 2);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(layoutManager);
-        imageAdapter = new ImageAdapter(image);
+        imageAdapter = new ImageAdapter(image, this);
         recyclerView.setAdapter(imageAdapter);
 
         btnMultiple.setOnClickListener(this);
@@ -46,9 +46,10 @@ public class MultipleImages extends AppCompatActivity implements View.OnClickLis
 
 
             if(resultCode==RESULT_OK){
-                //data.getParcelableArrayExtra(name);
+
                 //If Single image selected then it will fetch from Gallery
                 if(data.getData()!=null){
+
                    Uri mImageUri=data.getData();
                    image.add(mImageUri);
                    imageAdapter.notifyDataSetChanged();
@@ -61,6 +62,7 @@ public class MultipleImages extends AppCompatActivity implements View.OnClickLis
 
                             ClipData.Item item = mClipData.getItemAt(i);
                             Uri uri = item.getUri();
+
                             image.add(uri);
                             imageAdapter.notifyDataSetChanged();
                         }

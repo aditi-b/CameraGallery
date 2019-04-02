@@ -1,5 +1,6 @@
 package com.cameragallery;
 
+import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -8,16 +9,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.ArrayList;
+
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHolder>  {
 
 private ArrayList<Uri> images;
+private Context context;
 
-
-    ImageAdapter(ArrayList<Uri> images)
+    ImageAdapter(ArrayList<Uri> images, Context context)
     {
       this.images = images;
+      this.context = context;
     }
 
     @NonNull
@@ -30,8 +35,11 @@ private ArrayList<Uri> images;
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder viewHolder, int i) {
         Uri image_id = images.get(i);
-//       Bitmap bitmap = MediaStore.Images.Media.getBitmap(this, image_id);
-        viewHolder.imageAlbum.setImageURI(image_id);
+
+        Glide
+                .with(context)
+                .load(image_id)
+                .into(viewHolder.imageAlbum);
     }
 
     @Override
